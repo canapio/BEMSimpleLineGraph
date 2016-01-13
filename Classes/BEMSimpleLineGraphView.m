@@ -59,6 +59,9 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
     
     /// All of the X-Axis Labels
     NSMutableArray *xAxisLabels;
+    
+    /// Checking flag that createLayoutTouchReport method was called
+    BOOL isCreateLayoutTouchReport;
 }
 
 /// The vertical line which appears when the user drags across the graph
@@ -196,6 +199,7 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
     dataPoints = [NSMutableArray array];
     xAxisLabels = [NSMutableArray array];
     yAxisValues = [NSMutableArray array];
+    isCreateLayoutTouchReport = NO;
 
     // Initialize BEM Objects
     _averageLine = [[BEMAverageLine alloc] init];
@@ -226,8 +230,15 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
         // Draw the graph
         [self drawEntireGraph];
         
-        // Setup the touch report
-        [self layoutTouchReport];
+        if (!isCreateLayoutTouchReport) {
+            // Setup the touch report views only one time
+            [self createLayoutTouchReport];
+            isCreateLayoutTouchReport = YES;
+        } else {
+            // resize the touch report views
+            [self resizeLayoutTouchReport];
+        }
+        
         
         // Let the delegate know that the graph finished updates
         if ([self.delegate respondsToSelector:@selector(lineGraphDidFinishLoading:)])
@@ -318,7 +329,7 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
     }
 }
 
-- (void)layoutTouchReport {
+- (void)createLayoutTouchReport {
     // If the touch report is enabled, set it up
     if (self.enableTouchReport == YES || self.enablePopUpReport == YES) {
         // Initialize the vertical gray line that appears where the user touches the graph.
@@ -386,6 +397,21 @@ typedef NS_ENUM(NSInteger, BEMInternalTags)
                 [self addSubview:self.popUpView];
                 [self addSubview:self.popUpLabel];
             }
+        }
+    }
+}
+
+- (void) resizeLayoutTouchReport {
+    // If the touch report is enabled, resize views
+    if (self.enableTouchReport == YES || self.enablePopUpReport == YES) {
+        if (self.touchInputLine) {
+            self.touchInputLine.frame = CGRectMake(0, 0, self.widthTouchInputLine, self.frame.size.height);
+        }
+        if (self.panView) {
+            self.panView.frame = CGRectMake(10, 10, self.viewForBaselineLayout.frame.size.width, self.viewForBaselineLayout.frame.size.height);
+        }
+        if (self.popUpView) {
+            self.popUpView.frame = CGRectMake(0, 0, self.popUpLabel.frame.size.width + 10, self.popUpLabel.frame.size.height + 2);
         }
     }
 }
